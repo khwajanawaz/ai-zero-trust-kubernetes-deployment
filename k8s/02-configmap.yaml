@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-zero-trust-config
+  namespace: ai-zero-trust
+data:
+  TEMPORAL_HOST: "temporal:7233"
+  TEMPORAL_ADDRESS: "temporal:7233"
+  TEMPORAL_TASK_QUEUE: "mcp-task-queue"
+
+  OPENAI_MODEL: "gpt-4o-mini"
+
+  OPA_URL: "http://opa:8181/v1/data/kubernetes/admission"
+
+  KUBECONFIG_PATH: ""
+  K8S_NAMESPACE: "ai-zero-trust"
+  K8S_MOCK_MODE: "false"

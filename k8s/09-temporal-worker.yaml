@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal-worker
+  namespace: ai-zero-trust
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temporal-worker
+  template:
+    metadata:
+      labels:
+        app: temporal-worker
+    spec:
+      serviceAccountName: deployment-worker
+
+      containers:
+        - name: temporal-worker
+          image: khwajanawaz/temporal-worker:v1
+          imagePullPolicy: IfNotPresent
+
+          envFrom:
+            - configMapRef:
+                name: ai-zero-trust-config
+
+            - secretRef:
+                name: ai-zero-trust-secrets
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "192Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

@@ -1,18 +1,36 @@
 from typing import Any
+
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
+from kubernetes.config.config_exception import ConfigException
 
-from mcp_server.config import KUBECONFIG_PATH, K8S_NAMESPACE, K8S_MOCK_MODE
+from mcp_server.config import (
+    KUBECONFIG_PATH,
+    K8S_NAMESPACE,
+    K8S_MOCK_MODE,
+)
 
 
 def load_k8s_config() -> None:
+    """
+    Load Kubernetes authentication.
+
+    Inside EKS:
+        Uses the Pod ServiceAccount through in-cluster configuration.
+
+    Outside EKS:
+        Falls back to the kubeconfig file.
+    """
     if K8S_MOCK_MODE:
         return
 
-    if KUBECONFIG_PATH:
-        config.load_kube_config(config_file=KUBECONFIG_PATH)
-    else:
-        config.load_kube_config()
+    try:
+        config.load_incluster_config()
+    except ConfigException:
+        if KUBECONFIG_PATH:
+            config.load_kube_config(config_file=KUBECONFIG_PATH)
+        else:
+            config.load_kube_config()
 
 
 def fetch_cluster_context() -> dict[str, Any]:
@@ -21,18 +39,32 @@ def fetch_cluster_context() -> dict[str, Any]:
             "namespace": K8S_NAMESPACE,
             "namespaces": ["default", "kube-system", "dev"],
             "existing_pods": ["demo-pod-1", "demo-pod-2"],
+            "existing_deployments": [],
             "mode": "mock",
         }
 
     load_k8s_config()
-    v1 = client.CoreV1Api()
-    apps_v1 = client.AppsV1Api()
 
-    namespaces = [ns.metadata.name for ns in v1.list_namespace().items]
-    pods = [pod.metadata.name for pod in v1.list_namespaced_pod(K8S_NAMESPACE).items]
+    core_api = client.CoreV1Api()
+    apps_api = client.AppsV1Api()
+
+    namespaces = [
+        namespace.metadata.name
+        for namespace in core_api.list_namespace().items
+    ]
+
+    pods = [
+        pod.metadata.name
+        for pod in core_api.list_namespaced_pod(
+            namespace=K8S_NAMESPACE
+        ).items
+    ]
+
     deployments = [
-        dep.metadata.name
-        for dep in apps_v1.list_namespaced_deployment(K8S_NAMESPACE).items
+        deployment.metadata.name
+        for deployment in apps_api.list_namespaced_deployment(
+            namespace=K8S_NAMESPACE
+        ).items
     ]
 
     return {
@@ -49,8 +81,14 @@ def apply_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
         return {
             "success": True,
             "kind": manifest.get("kind"),
-            "name": manifest.get("metadata", {}).get("name", "unknown"),
-            "namespace": manifest.get("metadata", {}).get("namespace", K8S_NAMESPACE),
+            "name": manifest.get("metadata", {}).get(
+                "name",
+                "unknown",
+            ),
+            "namespace": manifest.get("metadata", {}).get(
+                "namespace",
+                K8S_NAMESPACE,
+            ),
             "message": "Mock apply completed successfully",
         }
 
@@ -63,79 +101,119 @@ def apply_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
 
     try:
         if kind == "ConfigMap":
-            v1 = client.CoreV1Api()
-            body = client.V1ConfigMap(**manifest)
+            core_api = client.CoreV1Api()
+            body = client.ApiClient()._ApiClient__deserialize(
+                manifest,
+                "V1ConfigMap",
+            )
 
             try:
-                v1.read_namespaced_config_map(name=name, namespace=namespace)
-                v1.replace_namespaced_config_map(name=name, namespace=namespace, body=body)
+                core_api.read_namespaced_config_map(
+                    name=name,
+                    namespace=namespace,
+                )
+
+                core_api.replace_namespaced_config_map(
+                    name=name,
+                    namespace=namespace,
+                    body=body,
+                )
+
                 action = "updated"
+
             except ApiException as exc:
                 if exc.status == 404:
-                    v1.create_namespaced_config_map(namespace=namespace, body=body)
+                    core_api.create_namespaced_config_map(
+                        namespace=namespace,
+                        body=body,
+                    )
                     action = "created"
                 else:
                     raise
-
-            return {
-                "success": True,
-                "kind": kind,
-                "name": name,
-                "namespace": namespace,
-                "message": f"ConfigMap {action} successfully",
-            }
 
         elif kind == "Deployment":
-            apps_v1 = client.AppsV1Api()
-            body = client.V1Deployment(**manifest)
+            apps_api = client.AppsV1Api()
+            body = client.ApiClient()._ApiClient__deserialize(
+                manifest,
+                "V1Deployment",
+            )
 
             try:
-                apps_v1.read_namespaced_deployment(name=name, namespace=namespace)
-                apps_v1.replace_namespaced_deployment(name=name, namespace=namespace, body=body)
+                apps_api.read_namespaced_deployment(
+                    name=name,
+                    namespace=namespace,
+                )
+
+                apps_api.replace_namespaced_deployment(
+                    name=name,
+                    namespace=namespace,
+                    body=body,
+                )
+
                 action = "updated"
+
             except ApiException as exc:
                 if exc.status == 404:
-                    apps_v1.create_namespaced_deployment(namespace=namespace, body=body)
+                    apps_api.create_namespaced_deployment(
+                        namespace=namespace,
+                        body=body,
+                    )
                     action = "created"
                 else:
                     raise
-
-            return {
-                "success": True,
-                "kind": kind,
-                "name": name,
-                "namespace": namespace,
-                "message": f"Deployment {action} successfully",
-            }
 
         elif kind == "Service":
-            v1 = client.CoreV1Api()
-            body = client.V1Service(**manifest)
+            core_api = client.CoreV1Api()
+            body = client.ApiClient()._ApiClient__deserialize(
+                manifest,
+                "V1Service",
+            )
 
             try:
-                v1.read_namespaced_service(name=name, namespace=namespace)
-                v1.replace_namespaced_service(name=name, namespace=namespace, body=body)
+                existing_service = core_api.read_namespaced_service(
+                    name=name,
+                    namespace=namespace,
+                )
+
+                if (
+                    existing_service.spec
+                    and existing_service.spec.cluster_ip
+                ):
+                    body.spec.cluster_ip = (
+                        existing_service.spec.cluster_ip
+                    )
+
+                core_api.replace_namespaced_service(
+                    name=name,
+                    namespace=namespace,
+                    body=body,
+                )
+
                 action = "updated"
+
             except ApiException as exc:
                 if exc.status == 404:
-                    v1.create_namespaced_service(namespace=namespace, body=body)
+                    core_api.create_namespaced_service(
+                        namespace=namespace,
+                        body=body,
+                    )
                     action = "created"
                 else:
                     raise
-
-            return {
-                "success": True,
-                "kind": kind,
-                "name": name,
-                "namespace": namespace,
-                "message": f"Service {action} successfully",
-            }
 
         else:
             raise ValueError(
-                f"Apply is not yet supported for kind='{kind}'. "
+                f"Apply is not supported for kind='{kind}'. "
                 "Supported kinds: ConfigMap, Deployment, Service."
             )
+
+        return {
+            "success": True,
+            "kind": kind,
+            "name": name,
+            "namespace": namespace,
+            "message": f"{kind} {action} successfully",
+        }
 
     except Exception as exc:
         return {
@@ -147,7 +225,10 @@ def apply_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
         }
 
 
-def verify_deployment(name: str, namespace: str | None = None) -> dict[str, Any]:
+def verify_deployment(
+    name: str,
+    namespace: str | None = None,
+) -> dict[str, Any]:
     namespace = namespace or K8S_NAMESPACE
 
     if K8S_MOCK_MODE:
@@ -160,10 +241,14 @@ def verify_deployment(name: str, namespace: str | None = None) -> dict[str, Any]
         }
 
     load_k8s_config()
-    apps_v1 = client.AppsV1Api()
+    apps_api = client.AppsV1Api()
 
     try:
-        deployment = apps_v1.read_namespaced_deployment(name=name, namespace=namespace)
+        deployment = apps_api.read_namespaced_deployment(
+            name=name,
+            namespace=namespace,
+        )
+
         desired = deployment.spec.replicas or 0
         ready = deployment.status.ready_replicas or 0
         available = deployment.status.available_replicas or 0
@@ -177,7 +262,11 @@ def verify_deployment(name: str, namespace: str | None = None) -> dict[str, Any]
             "desired_replicas": desired,
             "ready_replicas": ready,
             "available_replicas": available,
-            "message": "Deployment rollout successful" if success else "Deployment rollout not complete",
+            "message": (
+                "Deployment rollout successful"
+                if success
+                else "Deployment rollout not complete"
+            ),
         }
 
     except Exception as exc:

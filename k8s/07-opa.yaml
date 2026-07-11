@@ -1,0 +1,110 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-policy
+  namespace: ai-zero-trust
+data:
+  kubernetes.rego: |
+    package kubernetes.admission
+
+    default allow := false
+
+    violations contains msg if {
+      container := input.spec.template.spec.containers[_]
+      endswith(container.image, ":latest")
+      msg := "latest image tag is not allowed"
+    }
+
+    violations contains msg if {
+      container := input.spec.template.spec.containers[_]
+      not container.resources.limits
+      msg := "resource limits are required"
+    }
+
+    violations contains msg if {
+      container := input.spec.template.spec.containers[_]
+      container.securityContext.privileged == true
+      msg := "privileged containers are not allowed"
+    }
+
+    violations contains msg if {
+      input.spec.template.spec.hostNetwork == true
+      msg := "hostNetwork is not allowed"
+    }
+
+    allow if {
+      count(violations) == 0
+    }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opa
+  namespace: ai-zero-trust
+spec:
+  selector:
+    app: opa
+  ports:
+    - name: http
+      port: 8181
+      targetPort: 8181
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opa
+  namespace: ai-zero-trust
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opa
+  template:
+    metadata:
+      labels:
+        app: opa
+    spec:
+      containers:
+        - name: opa
+          image: openpolicyagent/opa:latest
+          imagePullPolicy: IfNotPresent
+
+          args:
+            - run
+            - --server
+            - --addr=0.0.0.0:8181
+            - --log-level=info
+            - /policies/kubernetes.rego
+
+          ports:
+            - containerPort: 8181
+              name: http
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8181
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+
+          volumeMounts:
+            - name: opa-policy
+              mountPath: /policies
+              readOnly: true
+
+      volumes:
+        - name: opa-policy
+          configMap:
+            name: opa-policy
