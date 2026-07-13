@@ -43,13 +43,42 @@ The framework combines:
 
 Only workloads that successfully pass every validation stage are deployed.
 
+## Features
+
+- Zero Trust Deployment Pipeline
+- Kubernetes YAML Validation
+- Open Policy Agent Policy Enforcement
+- AI Security Risk Analysis
+- Human Approval Workflow
+- Amazon EKS Deployment
+- Dockerized Services
+- Temporal Workflow Orchestration
+- REST API
+- Policy-based Deployment Decisions
+- Audit Logging
+- Containerized Architecture
 
 
+  ## Deployment Workflow
 
+1. Developer submits Kubernetes YAML.
+2. FastAPI receives the request.
+3. Temporal starts a deployment workflow.
+4. OPA validates security policies.
+5. OpenAI analyzes deployment risks.
+6. Human approval is requested if required.
+7. Deployment proceeds only after successful validation.
+8. Kubernetes deploys the workload into Amazon EKS.
 
-
-
-
+.
+├── k8s
+├── mcp_server
+├── temporal_app
+├── opa_policies
+├── Dockerfile.api
+├── Dockerfile.worker
+├── requirements.txt
+└── README.md
 
 
 
