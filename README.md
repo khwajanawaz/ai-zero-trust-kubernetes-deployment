@@ -73,11 +73,12 @@ Only workloads that successfully pass every validation stage are deployed.
 
 ## 🏗️ System Architecture
 
-The overall architecture of the AI-Driven Zero-Trust Kubernetes Deployment Framework.
+The framework validates Kubernetes manifests using parallel security services, AI-based risk analysis, policy enforcement, and a human approval stage before securely deploying workloads to Amazon EKS.
 
 <p align="center">
-  <img src="docs/images/architecture.png" width="700">
+  <img src="docs/images/architecture.png" alt="System Architecture" width="900">
 </p>
+
 
 ## 📚 Swagger API Documentation
 
