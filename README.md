@@ -76,7 +76,7 @@ Only workloads that successfully pass every validation stage are deployed.
 The overall architecture of the AI-Driven Zero-Trust Kubernetes Deployment Framework.
 
 <p align="center">
-  <img src="docs/images/architecture.png" width="1000">
+  <img src="docs/images/architecture.png" width="700">
 </p>
 
 ## 📚 Swagger API Documentation
