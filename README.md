@@ -70,38 +70,96 @@ Only workloads that successfully pass every validation stage are deployed.
 7. Deployment proceeds only after successful validation.
 8. Kubernetes deploys the workload into Amazon EKS.
 
-.
-├── k8s
-├── mcp_server
-├── temporal_app
-├── opa_policies
-├── Dockerfile.api
-├── Dockerfile.worker
-├── requirements.txt
-└── README.md
+
+## 🏗️ System Architecture
+
+The overall architecture of the AI-Driven Zero-Trust Kubernetes Deployment Framework.
+
+<p align="center">
+  <img src="docs/images/architecture.png" width="1000">
+</p>
+
+## 📚 Swagger API Documentation
+
+The project exposes REST APIs for Kubernetes deployment validation and approval.
+
+<p align="center">
+  <img src="docs/images/swaggerhome.png" width="1000">
+</p>
+
+## 🚀 Submit Kubernetes Manifest
+
+Developers submit a Kubernetes deployment manifest through the FastAPI endpoint.
+
+<p align="center">
+  <img src="docs/images/submit-yaml.png" width="1000">
+</p>
+
+## ⚙️ Workflow Started
+
+A new Temporal workflow is automatically created after receiving the deployment request.
+
+<p align="center">
+  <img src="docs/images/workflow-running.png" width="1000">
+</p>
+
+## ⏳ Waiting for Human Approval
+
+The workflow pauses until an administrator reviews and approves the deployment.
+
+<p align="center">
+  <img src="docs/images/waiting-approval.png" width="1000">
+</p>
+
+## ✅ Deployment Approval
+
+The administrator approves the deployment through the Approval API.
+
+<p align="center">
+  <img src="docs/images/approval-api.png" width="1000">
+</p>
+
+## 🎉 Workflow Completed
+
+After approval, the deployment workflow completes successfully.
+
+<p align="center">
+  <img src="docs/images/workflow-completed.png" width="1000">
+</p>
+
+## 📈 Temporal Workflow Timeline
+
+Temporal provides a complete execution timeline for every deployment.
+
+<p align="center">
+  <img src="docs/images/temporal-timeline.png" width="1000">
+</p>
+
+## ☁️ Deployment Result
+
+The deployment has been successfully applied to Amazon EKS.
+
+<p align="center">
+  <img src="docs/images/deployment-result.png" width="1000">
+</p>
+
+
+## 🚀 Running on Amazon EKS
+
+The deployed application is successfully running in the Kubernetes cluster.
+
+<p align="center">
+  <img src="docs/images/kubectl-pods.png" width="1000">
+</p>
 
 
 
 
 
-User sends YAML to FastAPI MCP server
-↓
-MCP server validates YAML
-↓
-MCP server starts a Temporal workflow
-↓
-Temporal workflow runs these steps:
-   1. validate manifest
-   2. fetch cluster context
-   3. call AI analysis
-   4. call OPA policy check
-   5. combine result
-   6. wait for human approval
-   7. if approved → apply manifest to cluster
-↓
-MCP API returns workflow id
-↓
-User later approves or denies using API
-↓
+
+
+
+
+
 Workflow continues and finishes
 
