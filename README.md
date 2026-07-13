@@ -85,7 +85,7 @@ The framework validates Kubernetes manifests using parallel security services, A
 The project exposes REST APIs for Kubernetes deployment validation and approval.
 
 <p align="center">
-  <img src="docs/images/swaggerhome.png" width="1000">
+  <img src="docs/images/swaggehome.png" width="1000">
 </p>
 
 ## 🚀 Submit Kubernetes Manifest
