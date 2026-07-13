@@ -1,5 +1,13 @@
 # AI-Driven Zero-Trust Kubernetes Deployment Framework
 
+## 🎯 Project Aim
+
+The aim of this project is to develop an AI-driven Zero-Trust deployment framework for Kubernetes that improves the security and reliability of cloud-native application deployments.
+
+The framework acts as an intelligent deployment gateway by validating Kubernetes manifests through multiple security layers, including YAML validation, Open Policy Agent (OPA) policy enforcement, AI-powered security risk analysis, and a human approval workflow before allowing deployments to Amazon Elastic Kubernetes Service (Amazon EKS).
+
+By combining workflow orchestration with Temporal, policy-based security using OPA, and AI-assisted decision making, the system helps prevent insecure deployments, automate governance, and ensure that only validated and approved workloads are deployed into production Kubernetes environments.
+
 An intelligent deployment gateway that validates Kubernetes manifests using Open Policy Agent (OPA), AI-powered risk analysis, Temporal workflows, and human approval before securely deploying workloads to Amazon EKS.
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
