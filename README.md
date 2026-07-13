@@ -26,6 +26,8 @@ An intelligent deployment gateway that validates Kubernetes manifests using Open
 
 ![MIT License](https://img.shields.io/badge/License-MIT-green)
 
+---
+
 ## Overview
 
 Traditional Kubernetes deployments mainly validate YAML syntax before deployment.
@@ -50,6 +52,7 @@ The framework combines:
 - Amazon Elastic Kubernetes Service (EKS)
 
 Only workloads that successfully pass every validation stage are deployed.
+---
 
 ## Features
 
@@ -65,7 +68,8 @@ Only workloads that successfully pass every validation stage are deployed.
 - Policy-based Deployment Decisions
 - Audit Logging
 - Containerized Architecture
-
+- 
+---
 
   ## Deployment Workflow
 
@@ -196,14 +200,14 @@ The deployed application is successfully running in the Kubernetes cluster.
   <img src="docs/images/kubectl-pods.png" width="1000">
 </p>
 
+---
 
 
+## 🎯 Conclusion
 
+The evaluation confirms that the proposed framework successfully integrates **Kubernetes YAML validation**, **Open Policy Agent (OPA)**, **AI-powered security risk analysis**, **Temporal workflow orchestration**, **human approval**, and **Amazon EKS deployment** into a unified **Zero-Trust deployment pipeline**.
 
+The framework effectively prevents insecure deployments, automates deployment governance, and ensures that only validated and approved workloads are deployed into production Kubernetes environments.
 
-
-
-
-
-Workflow continues and finishes
+---
 
