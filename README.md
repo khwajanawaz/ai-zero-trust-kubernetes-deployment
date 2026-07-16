@@ -67,8 +67,7 @@ Only workloads that successfully pass every validation stage are deployed.
 - REST API
 - Policy-based Deployment Decisions
 - Audit Logging
-- Containerized Architecture
-- 
+- Containerized Architecture 
 ---
 
   ## Deployment Workflow
